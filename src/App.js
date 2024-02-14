@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useReducer, useState } from 'react';
 import styles from './app.module.css';
 import InputForm from './components/InputForm';
 import TaksList from './components/TaksList';
@@ -35,57 +35,116 @@ const tachesSiteWeb = [
   { id: 9, text: `Conception de l'architecture du site web`, completed: false },
 ];
 
+function tasksReducer(state, action) {
+  switch (action.type) {
+    case 'MARK_COMPLETED':
+      return state.map((task) => ({
+        ...task,
+        completed: true,
+      }));
+    case 'MARK_INCOMPLETE':
+      return state.map((task) => ({
+        ...task,
+        completed: false,
+      }));
+    case 'REMOVE_TASK':
+      return state.filter((_, index) => index !== action.payload);
+    case 'ADD_TASK':
+      return [
+        {
+          id: Math.floor(Math.random() * 1000),
+          text: action.payload,
+          completed: false,
+        },
+        ...state,
+      ];
+    case 'COMPLETE_TASK':
+      return state.map((task, index) => {
+        if (index === action.payload) {
+          return {
+            ...task,
+            completed: true,
+          };
+        }
+        return task;
+      });
+    default:
+      return state;
+  }
+}
+
 function App() {
-  const [tasks, setTasks] = useState(tachesSiteWeb);
+  // const [tasks, setTasks] = useState(tachesSiteWeb);
+  const [tasks, dispatch] = useReducer(tasksReducer, tachesSiteWeb);
 
   const totalUncompletedTasks = useMemo(() => {
     return tasks.filter((task) => !task.completed).length;
   }, [tasks]);
 
+  // const markAllTasksCompleted = () => {
+  //   const updatedTasks = tasks.map((task) => ({
+  //     ...task,
+  //     completed: true,
+  //   }));
+  //   setTasks(updatedTasks);
+  // };
+
+  // const markAllTasksIncomplete = () => {
+  //   const updatedTasks = tasks.map((task) => ({
+  //     ...task,
+  //     completed: false,
+  //   }));
+  //   setTasks(updatedTasks);
+  // };
+
+  // const removeTasks = (rvTask) => {
+  //   const newTask = tasks.filter((_, index) => index !== rvTask);
+  //   setTasks(newTask);
+  // };
+
+  // const submit = (task) => {
+  //   setTasks((prevTask) => [
+  //     {
+  //       id: Math.floor(Math.random() * 1000),
+  //       text: task,
+  //       completed: false,
+  //     },
+  //     ...prevTask,
+  //   ]);
+  // };
+
+  // const completeTask = (taskIndex) => {
+  //   const updatedTasks = tasks.map((task, index) => {
+  //     if (index === taskIndex) {
+  //       return {
+  //         ...task,
+  //         completed: true,
+  //       };
+  //     }
+  //     return task;
+  //   });
+
+  //   setTasks(updatedTasks);
+  // };
+
   const markAllTasksCompleted = () => {
-    const updatedTasks = tasks.map((task) => ({
-      ...task,
-      completed: true,
-    }));
-    setTasks(updatedTasks);
+    dispatch({ type: 'MARK_COMPLETED' });
   };
 
   const markAllTasksIncomplete = () => {
-    const updatedTasks = tasks.map((task) => ({
-      ...task,
-      completed: false,
-    }));
-    setTasks(updatedTasks);
-  };
-
-  const removeTasks = (rvTask) => {
-    const newTask = tasks.filter((_, index) => index !== rvTask);
-    setTasks(newTask);
-  };
-
-  const submit = (task) => {
-    setTasks((prevTask) => [
-      {
-        id: Math.floor(Math.random() * 1000),
-        text: task,
-        completed: false,
-      },
-      ...prevTask,
-    ]);
+    dispatch({ type: 'MARK_INCOMPLETE' });
   };
 
   const completeTask = (taskIndex) => {
-    const updatedTasks = tasks.map((task, index) => {
-      if (index === taskIndex) {
-        return {
-          ...task,
-          completed: true,
-        };
-      }
-      return task;
-    });
+    dispatch({ type: 'COMPLETE_TASK', payload: taskIndex });
+  };
 
-    setTasks(updatedTasks);
+  const removeTasks = (rvTask) => {
+    dispatch({ type: 'REMOVE_TASK', payload: rvTask });
+  };
+
+  const submit = (task) => {
+    dispatch({ type: 'ADD_TASK', payload: task });
   };
 
   return (
